@@ -1,151 +1,89 @@
-from flask import Flask, request, render_template_string
+import streamlit as st
 import pickle
 import numpy as np
 
-app = Flask(__name__)
+# Page Config
+st.set_page_config(
+    page_title="Cancer Survival Prediction",
+    page_icon="🩺",
+    layout="wide"
+)
 
 # Load Model
 with open("DecisionTree.pkl", "rb") as f:
     model = pickle.load(f)
 
-html = """
-<!DOCTYPE html>
-<html>
-<head>
-<title>Cancer Survival Prediction</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
+# Custom CSS
+st.markdown("""
 <style>
-
-body{
-font-family:Arial,sans-serif;
-background:linear-gradient(135deg,#0f172a,#1e40af);
-padding:20px;
+.main {
+    background-color: #f8fafc;
 }
-
-.container{
-max-width:1000px;
-margin:auto;
-background:white;
-padding:30px;
-border-radius:20px;
-box-shadow:0 10px 30px rgba(0,0,0,0.3);
+.title {
+    text-align: center;
+    color: #1e40af;
+    font-size: 40px;
+    font-weight: bold;
 }
-
-h1{
-text-align:center;
-color:#1e40af;
+.subtitle {
+    text-align: center;
+    color: #64748b;
+    font-size: 18px;
+    margin-bottom: 30px;
 }
-
-.grid{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:15px;
+.result {
+    padding: 20px;
+    border-radius: 10px;
+    font-size: 24px;
+    text-align: center;
+    font-weight: bold;
 }
-
-input,select{
-width:100%;
-padding:12px;
-border:1px solid #ccc;
-border-radius:10px;
-}
-
-button{
-width:100%;
-padding:15px;
-background:#2563eb;
-color:white;
-border:none;
-border-radius:10px;
-font-size:18px;
-margin-top:20px;
-cursor:pointer;
-}
-
-button:hover{
-background:#1d4ed8;
-}
-
-.result{
-margin-top:20px;
-padding:15px;
-background:#eff6ff;
-border-radius:10px;
-text-align:center;
-font-size:22px;
-font-weight:bold;
-}
-
 </style>
-</head>
+""", unsafe_allow_html=True)
 
-<body>
+# Header
+st.markdown('<p class="title">🩺 Cancer Survival Prediction System</p>',
+            unsafe_allow_html=True)
 
-<div class="container">
+st.markdown('<p class="subtitle">Decision Tree Machine Learning Model</p>',
+            unsafe_allow_html=True)
 
-<h1>🩺 Cancer Survival Prediction System</h1>
+# Input Form
+col1, col2 = st.columns(2)
 
-<form method="POST">
+with col1:
+    age = st.number_input("Age", min_value=1, max_value=120, value=45)
+    gender = st.number_input("Gender (Encoded)", value=0)
+    state = st.number_input("State (Encoded)", value=0)
+    city = st.number_input("City (Encoded)", value=0)
 
-<div class="grid">
+with col2:
+    cancer_type = st.number_input("Cancer Type (Encoded)", value=0)
+    stage = st.number_input("Stage (Encoded)", value=0)
+    treatment_type = st.number_input("Treatment Type (Encoded)", value=0)
+    survival_months = st.number_input("Survival Months", value=12)
 
-<input type="number" name="Age" placeholder="Age" required>
+# Prediction
+if st.button("🔍 Predict Survival"):
 
-<input type="number" name="Gender" placeholder="Gender Encoded Value" required>
+    features = np.array([[
+        age,
+        gender,
+        state,
+        city,
+        cancer_type,
+        stage,
+        treatment_type,
+        survival_months
+    ]])
 
-<input type="number" name="State" placeholder="State Encoded Value" required>
+    prediction = model.predict(features)[0]
 
-<input type="number" name="City" placeholder="City Encoded Value" required>
+    st.success(f"Prediction Result: {prediction}")
 
-<input type="number" name="Cancer_Type" placeholder="Cancer Type Encoded Value" required>
-
-<input type="number" name="Stage" placeholder="Stage Encoded Value" required>
-
-<input type="number" name="Treatment_Type" placeholder="Treatment Type Encoded Value" required>
-
-<input type="number" name="Survival_Months" placeholder="Survival Months" required>
-
-</div>
-
-<button type="submit">Predict</button>
-
-</form>
-
-{% if prediction %}
-<div class="result">
-{{ prediction }}
-</div>
-{% endif %}
-
-</div>
-
-</body>
-</html>
-"""
-
-@app.route("/", methods=["GET","POST"])
-def home():
-
-    prediction = ""
-
-    if request.method == "POST":
-
-        features = np.array([[
-            float(request.form["Age"]),
-            float(request.form["Gender"]),
-            float(request.form["State"]),
-            float(request.form["City"]),
-            float(request.form["Cancer_Type"]),
-            float(request.form["Stage"]),
-            float(request.form["Treatment_Type"]),
-            float(request.form["Survival_Months"])
-        ]])
-
-        result = model.predict(features)[0]
-
-        prediction = f"Prediction Result: {result}"
-
-    return render_template_string(html,prediction=prediction)
-
-if __name__ == "__main__":
-    app.run()
+# Footer
+st.markdown("---")
+st.markdown(
+    "<center>Developed by Pranita | Data Analyst & Machine Learning Project</center>",
+    unsafe_allow_html=True
+)
